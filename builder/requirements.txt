@@ -6,3 +6,4 @@
 # To learn more, see https://pip.pypa.io/en/stable/reference/requirements-file-format/
 
 runpod==1.6.0
+git+https://github.com/shashikg/WhisperS2T.git@main
