@@ -31,11 +31,7 @@ jobs:
       - name: Determine Docker tag
         id: docker-tag
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "DOCKER_TAG=dev" >> $GITHUB_ENV
-          else
-            echo "DOCKER_TAG=${{ github.sha }}" >> $GITHUB_ENV
-          fi
+          echo "DOCKER_TAG=${{ github.sha }}" >> $GITHUB_ENV
 
       - name: Build and push
         uses: docker/build-push-action@v4

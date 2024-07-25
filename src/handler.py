@@ -46,46 +46,36 @@ def download_file(url):
 def handler(job):
     """ Handler function that will be used to process jobs. """
     try:
-        job_input = job['input']
-
-    
-        model = whisper_s2t.load_model(model_identifier="large-v2", backend='CTranslate2', asr_options={'word_timestamps': True})
-        job_input_audio_base_64 = job_input.get('audio_base_64')
-        job_input_audio_url = job_input.get('audio_url')
-        if job_input_audio_base_64:
-            # If there is base64 data
-            audio_input = base64_to_tempfile(job_input_audio_base_64)
-        elif job_input_audio_url and job_input_audio_url.startswith('http'):
-            # If there is an URL
-            audio_input = download_file(job_input_audio_url)
-        else:
-            return "No audio input provided"
+        job_input = job.get('input', {})
         
-        language_code = job_input.get('language_code', 'pl')
-        files = [audio_input]
-        lang_codes = [language_code, "en"]
-        tasks = ['transcribe', 'translate']
-        initial_prompts = ["W poniższym tekście wszystkie słowa zawierają tylko litery. W tekście nie ma cyfr ani liter niealfabetycznych, takich jak $, % itp., z wyjątkiem znaków interpunkcyjnych: przecinków, kropek, wykrzykników, znaków zapytania, apostrofów i cudzysłowów.
-
-Na przykład:
-
-\"2014\" jest zapisane jako \"dwa tysiące czternaście\".
- \"by 2 children\" jest zapisane jako \"by two children\".
-\"13zł\" jest zapisywane jako \"trzynaście złotych\".
-\"100%\" jest zapisywane jako \"sto procent\".
-\"Około 40-50 p.p.m.\" jest zapisane jako \"Około 40-50 p.p.m.\".
-
-----
-
-
-",
-""]
+        load_model = job_input.get('load_model', {})
+        
+        load_model['model_identifier'] = load_model.get('model_identifier', "large-v2")
+        load_model['backend'] = load_model.get('backend', 'CTranslate2')
+        
+        load_model['asr_options'] = load_model.get('asr_options', {})
+        load_model['asr_options']['word_timestamps'] = load_model['asr_options'].get('word_timestamps', True)
+        
+        model = whisper_s2t.load_model(**load_model)
+        
+        # convert audio input to tempfiles
+        files = []
+        for f in job_input.get('files', []):
+            if f.get('audio_base_64'):
+                files.append(base64_to_tempfile(f.get('audio_base_64')))
+            elif f.get('audio_url') and f.get('audio_url').startswith('http'):
+                files.append(download_file(f.get('audio_url')))
+            else:
+                return "No audio input provided"
+            
+        transcribe_with_vad = job_input.get('transcribe_with_vad', {})
+        transcribe_with_vad['lang_codes'] = transcribe_with_vad.get('lang_codes', ['pl', 'en'])
+        transcribe_with_vad['tasks'] = transcribe_with_vad.get('tasks', ['transcribe', 'translate'])
+        transcribe_with_vad['initial_prompts'] = transcribe_with_vad.get('initial_prompts', ["",""])
+        transcribe_with_vad['batch_size'] = transcribe_with_vad.get('batch_size', 32)
 
         out = model.transcribe_with_vad(files,
-                                        lang_codes=lang_codes,
-                                        tasks=tasks,
-                                        initial_prompts=initial_prompts,
-                                        batch_size=32)
+                                        **transcribe_with_vad)
         return out
     except Exception as e:
         return f"Error: {str(e)}, Args: {e.args}, Traceback: {''.join(traceback.format_tb(e.__traceback__))}"
