@@ -63,9 +63,23 @@ def handler(job):
         
         language_code = job_input.get('language_code', 'pl')
         files = [audio_input]
-        lang_codes = [language_code]
-        tasks = ['transcribe']
-        initial_prompts = [None]
+        lang_codes = [language_code, "en"]
+        tasks = ['transcribe', 'translate']
+        initial_prompts = ["W poniższym tekście wszystkie słowa zawierają tylko litery. W tekście nie ma cyfr ani liter niealfabetycznych, takich jak $, % itp., z wyjątkiem znaków interpunkcyjnych: przecinków, kropek, wykrzykników, znaków zapytania, apostrofów i cudzysłowów.
+
+Na przykład:
+
+\"2014\" jest zapisane jako \"dwa tysiące czternaście\".
+ \"by 2 children\" jest zapisane jako \"by two children\".
+\"13zł\" jest zapisywane jako \"trzynaście złotych\".
+\"100%\" jest zapisywane jako \"sto procent\".
+\"Około 40-50 p.p.m.\" jest zapisane jako \"Około 40-50 p.p.m.\".
+
+----
+
+
+",
+""]
 
         out = model.transcribe_with_vad(files,
                                         lang_codes=lang_codes,
