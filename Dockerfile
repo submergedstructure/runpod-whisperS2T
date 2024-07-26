@@ -1,11 +1,6 @@
-# Base image -> https://github.com/runpod/containers/blob/main/official-templates/base/Dockerfile
-# DockerHub -> https://hub.docker.com/r/runpod/base/tags
-FROM runpod/base:0.4.0-cuda11.8.0
+ARG SKIP_TENSORRT_LLM=True
 
-# The base image comes with many system dependencies pre-installed to help you get started quickly.
-# Please refer to the base image's Dockerfile for more information before adding additional dependencies.
-# IMPORTANT: The base image overrides the default huggingface cache location.
-
+FROM shashikg/whisper_s2t:dev
 
 # --- Optional: System dependencies ---
 # COPY builder/setup.sh /setup.sh
@@ -15,17 +10,11 @@ FROM runpod/base:0.4.0-cuda11.8.0
 # Python dependencies
 COPY builder/requirements.txt /requirements.txt
 
-RUN apt-get update && \
-    apt-get install -y libsndfile1 && \
-    python3.10 -m pip install --upgrade pip && \
-    python3.10 -m pip install --upgrade -r /requirements.txt --no-cache-dir && \
+RUN python3.10 -m pip install --upgrade -r /requirements.txt --no-cache-dir && \
     rm /requirements.txt
-
-RUN CUDNN_PATH=$(python3.10 -c 'import os; import nvidia.cublas.lib; import nvidia.cudnn.lib; print(os.path.dirname(nvidia.cublas.lib.__file__) + ":" + os.path.dirname(nvidia.cudnn.lib.__file__))') && \
-    echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:'${CUDNN_PATH} >> ~/.bashrc
 
 
 # Add src files (Worker Template)
 ADD src .
 
-CMD python3.10 -u /handler.py
+CMD ["python3.10", "-u", "handler.py"]
