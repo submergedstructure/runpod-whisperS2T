@@ -50,7 +50,7 @@ def handler(job):
         
         load_model = job_input.get('load_model', {})
         
-        load_model['model_identifier'] = load_model.get('model_identifier', "large-v2")
+        load_model['model_identifier'] = load_model.get('model_identifier', "large-v3")
         load_model['backend'] = load_model.get('backend', 'CTranslate2')
         
         load_model['asr_options'] = load_model.get('asr_options', {})
