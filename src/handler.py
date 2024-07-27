@@ -43,6 +43,47 @@ def download_file(url):
     return temp_file.name
 
 
+# def one_sentence_per_segment(transcript, end_punct_marks=["?", "."]):
+#     if 'word_timestamps' not in transcript[0]:
+#         print(f"Word Timestamp not available, one utterance can have multiple sentences.")
+#         return transcript
+
+#     new_transcript = []
+
+#     all_words = []
+#     for utt in transcript:
+#         all_words += utt['word_timestamps']
+
+#     curr_utt = []
+#     for word in all_words:
+#         curr_utt.append(word)
+#         if len(word['word']) and word['word'][-1] in end_punct_marks:
+#             if len(curr_utt):
+#                 new_transcript.append({
+#                     'text': " ".join([_['word'] for _ in curr_utt]),
+#                     'start_time': curr_utt[0]['start'],
+#                     'end_time': curr_utt[-1]['end'],
+#                     'word_timestamps': curr_utt
+#                 })
+
+#                 curr_utt = []
+
+#     if len(curr_utt):
+#         new_transcript.append({
+#             'text': " ".join([_['word'] for _ in curr_utt]),
+#             'start_time': curr_utt[0]['start'],
+#             'end_time': curr_utt[-1]['end'],
+#             'word_timestamps': curr_utt
+#         })
+
+#     return new_transcript
+
+# def one_sentence_per_segment_in_each_transcript(transcript, end_punct_marks=["?", ".", "!"]):
+#   new_out = []
+#   for transcript in out:
+#     new_out.append(one_sentence_per_segment(transcript, end_punct_marks=end_punct_marks))
+#   return new_out
+
 def handler(job):
     """ Handler function that will be used to process jobs. """
     try:
@@ -74,9 +115,11 @@ def handler(job):
         transcribe_with_vad['initial_prompts'] = transcribe_with_vad.get('initial_prompts', ["",""])
         transcribe_with_vad['batch_size'] = transcribe_with_vad.get('batch_size', 32)
 
-        out = model.transcribe_with_vad(files,
-                                        **transcribe_with_vad)
-        return out
+        
+        return {
+            "in" : job_input,
+            "out" : model.transcribe_with_vad(files,
+                                        **transcribe_with_vad)}
     except Exception as e:
         return f"Error: {str(e)}, Args: {e.args}, Traceback: {''.join(traceback.format_tb(e.__traceback__))}"
 
