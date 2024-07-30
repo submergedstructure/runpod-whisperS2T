@@ -43,7 +43,7 @@ def download_file(url):
     return temp_file.name
 
 
-def one_sentence_per_segment(transcript, end_punct_marks=["?", "."]):
+def one_sentence_per_segment(transcript, end_punct_marks=["?", ".", "!"]):
     if 'word_timestamps' not in transcript[0]:
         print(f"Word Timestamp not available, one utterance can have multiple sentences.")
         return transcript
@@ -89,7 +89,7 @@ def handler(job):
     try:
         job_input = job.get('input', {})
         
-        load_model = job_input.get('load_model', {})
+        load_model = {}
         
         load_model['model_identifier'] = load_model.get('model_identifier', "large-v2")
         load_model['backend'] = load_model.get('backend', 'CTranslate2')
