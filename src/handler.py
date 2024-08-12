@@ -9,6 +9,11 @@ import base64
 import tempfile
 import traceback
 import requests
+import spacy
+
+spacy.prefer_gpu()
+
+nlp = spacy.load("pl_core_news_lg")
 
 # If your handler runs inference on a model, load the model here.
 # You will want models to be loaded into memory before starting serverless.
@@ -42,8 +47,7 @@ def download_file(url):
     temp_file.close()
     return temp_file.name
 
-
-def one_sentence_per_segment(transcript, end_punct_marks=["?", ".", "!"]):
+def setences_with_grammar_analysis(transcript, end_punct_marks=["?", "."]):
     if 'word_timestamps' not in transcript[0]:
         print(f"Word Timestamp not available, one utterance can have multiple sentences.")
         return transcript
@@ -54,8 +58,17 @@ def one_sentence_per_segment(transcript, end_punct_marks=["?", ".", "!"]):
     for utt in transcript:
         all_words += utt['word_timestamps']
 
+    doc = nlp(" ".join([_['word'] for _ in all_words]))
+    token_no = 0
     curr_utt = []
     for word in all_words:
+        if doc[token_no].pos_ == "PUNCT":
+            token_no += 1
+        word['morph'] = f"{doc[token_no].morph}"
+        word['lemma'] = f"{doc[token_no].lemma_}"
+        word['pos'] = f"{doc[token_no].pos_}"
+        word['pos_explained'] = f"{spacy.explain(doc[token_no].pos_)}"
+        token_no += 1
         curr_utt.append(word)
         if len(word['word']) and word['word'][-1] in end_punct_marks:
             if len(curr_utt):
@@ -78,10 +91,11 @@ def one_sentence_per_segment(transcript, end_punct_marks=["?", ".", "!"]):
 
     return new_transcript
 
+
 def one_sentence_per_segment_in_each_transcript(transcripts, end_punct_marks=["?", ".", "!"]):
   new_out = []
   for transcript in transcripts:
-    new_out.append(one_sentence_per_segment(transcript, end_punct_marks=end_punct_marks))
+    new_out.append(setences_with_grammar_analysis(transcript, end_punct_marks=end_punct_marks))
   return new_out
 
 def handler(job):
